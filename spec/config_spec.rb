@@ -53,6 +53,13 @@ describe Jasmine::Config do
       end
       @config.stylesheets.should == ['foo.css', 'bar.css']
     end
+    
+    it "simple_config html_content" do
+      @config.stub!(:simple_config_file).and_return(File.join(@template_dir, 'spec/javascripts/support/jasmine.yml'))
+      YAML.stub!(:load).and_return({'html_files' => ['foo.html', 'bar.html']})
+      @config.stub!(:spec_dir).and_return(File.join(Dir.pwd, 'spec/fixtures'))
+      @config.html_content.should == "foobar"
+    end
 
     it "using rails jasmine.yml" do
       original_glob = Dir.method(:glob)

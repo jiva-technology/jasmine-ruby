@@ -158,6 +158,15 @@ module Jasmine
       end
       files
     end
+    
+    def html_content
+      content = ''
+      if simple_config['html_files']
+        files = match_files(spec_dir, simple_config['html_files'])
+        files.each { |file| File.open(File.join(spec_dir, file)) { |f| f.each_line { |line| content += line }}}
+      end
+      content
+    end
 
   end
 end

@@ -18,3 +18,7 @@
 
 #  Spec directory path. Your spec_files must be returned relative to this path.
 #spec_dir: spec/javascripts
+
+# Return an array of filepaths for html to include in run.html relative to spec_dir
+# html_files:
+#   - fixtures/**/*.html
