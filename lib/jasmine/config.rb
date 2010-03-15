@@ -5,9 +5,8 @@ module Jasmine
     def initialize(options = {})
       require 'selenium_rc'
       @selenium_jar_path = SeleniumRC::Server.allocate.jar_path
-      @options = options
 
-      @browser = options[:browser] ? options.delete(:browser) : 'firefox'
+      @browser = ENV["JASMINE_BROWSER"] || 'firefox'
       @selenium_pid = nil
       @jasmine_server_pid = nil
     end
@@ -27,27 +26,38 @@ module Jasmine
       stop_servers
     end
 
-    def start_servers
+    def start_jasmine_server
       @jasmine_server_port = Jasmine::find_unused_port
-      @selenium_server_port = Jasmine::find_unused_port
-
       server = Jasmine::Server.new(@jasmine_server_port, self)
-
-      @selenium_pid = fork do
-        Process.setpgrp
-        exec "java -jar #{@selenium_jar_path} -port #{@selenium_server_port} > /dev/null 2>&1"
-      end
-      puts "selenium started.  pid is #{@selenium_pid}"
-
       @jasmine_server_pid = fork do
         Process.setpgrp
         server.start
         exit! 0
       end
       puts "jasmine server started.  pid is #{@jasmine_server_pid}"
-
-      Jasmine::wait_for_listener(@selenium_server_port, "selenium server")
       Jasmine::wait_for_listener(@jasmine_server_port, "jasmine server")
+    end
+
+    def external_selenium_server_port
+      ENV['SELENIUM_SERVER_PORT'] && ENV['SELENIUM_SERVER_PORT'].to_i > 0 ? ENV['SELENIUM_SERVER_PORT'].to_i : nil
+    end
+
+    def start_selenium_server
+      @selenium_server_port = external_selenium_server_port
+      if @selenium_server_port.nil?
+        @selenium_server_port = Jasmine::find_unused_port
+        @selenium_pid = fork do
+          Process.setpgrp
+          exec "java -jar #{@selenium_jar_path} -port #{@selenium_server_port} > /dev/null 2>&1"
+        end
+        puts "selenium started.  pid is #{@selenium_pid}"
+      end
+      Jasmine::wait_for_listener(@selenium_server_port, "selenium server")
+    end
+
+    def start_servers
+      start_jasmine_server
+      start_selenium_server
     end
 
     def stop_servers
